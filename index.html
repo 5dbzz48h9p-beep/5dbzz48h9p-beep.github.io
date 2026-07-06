@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio — 个人作品集</title>
+<style>
+/* ============================================================
+   DESIGN SYSTEM
+   ============================================================ */
+:root {
+  --space-deep: #060618;
+  --space-mid: #0c0c2a;
+  --glass-bg: rgba(255,255,255,0.03);
+  --glass-border: rgba(255,255,255,0.08);
+  --glass-glow: rgba(120,160,255,0.08);
+  --text-primary: #e8e8f0;
+  --text-secondary: #9898b8;
+  --text-muted: #606080;
+  --accent: #7b9fff;
+  --accent-glow: rgba(123,159,255,0.35);
+  --accent-soft: rgba(123,159,255,0.12);
+  --cyan: #5eead4;
+  --cyan-glow: rgba(94,234,212,0.3);
+  --pink: #f472b6;
+  --pink-glow: rgba(244,114,182,0.25);
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
+  --transition-fast: 0.18s cubic-bezier(0.4,0,0.2,1);
+  --transition-smooth: 0.35s cubic-bezier(0.4,0,0.2,1);
+  --transition-spring: 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; }
+body {
+  background: var(--space-deep);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  line-height: 1.6;
+  overflow-x: hidden;
+  cursor: default;
+  user-select: none;
+}
+
+/* ============================================================
+   CANVAS LAYERS
+   ============================================================ */
+#starfield-canvas {
+  position: fixed; top:0; left:0; width:100%; height:100%;
+  z-index: 0; pointer-events: none;
+}
+
+/* ============================================================
+   DOT GRID OVERLAY
+   ============================================================ */
+.dot-grid {
+  position: fixed; top:0; left:0; width:100%; height:100%;
+  z-index: 1; pointer-events: none; opacity: 0.25;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* ============================================================
+   MAIN CONTENT WRAPPER
+   ============================================================ */
+main {
+  position: relative; z-index: 2;
+  max-width: 900px; margin: 0 auto; padding: 0 24px;
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 16px 32px;
+  display: flex; justify-content: space-between; align-items: center;
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  background: rgba(6,6,24,0.55);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+nav .logo {
+  font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--accent), var(--cyan));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+nav .nav-links { display: flex; gap: 28px; }
+nav .nav-links a {
+  color: var(--text-secondary); text-decoration: none; font-size: 0.9rem;
+  font-weight: 500; transition: color var(--transition-fast);
+}
+nav .nav-links a:hover { color: var(--text-primary); }
+
+/* ============================================================
+   GLASS CARD MIXIN (applied via class)
+   ============================================================ */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  box-shadow:
+    0 4px 24px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    inset 0 -1px 0 rgba(0,0,0,0.3);
+  transition: all var(--transition-smooth);
+}
+.glass-card:hover {
+  border-color: rgba(255,255,255,0.14);
+  box-shadow:
+    0 8px 40px rgba(0,0,0,0.5),
+    0 0 0 1px rgba(123,159,255,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    inset 0 -1px 0 rgba(0,0,0,0.3);
+  transform: translateY(-2px);
+}
+.glass-card:active {
+  transform: translateY(0);
+  box-shadow:
+    0 2px 12px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  transition: all 0.08s ease;
+}
+
+/* Pill-shaped glass tag */
+.glass-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 16px; border-radius: 100px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.8rem; font-weight: 500;
+  color: var(--text-secondary);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all var(--transition-fast);
+}
+.glass-tag:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.15);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+/* ============================================================
+   HERO SECTION
+   ============================================================ */
+.hero {
+  min-height: 100vh; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; text-align: center;
+  padding-top: 80px;
+}
+.hero-avatar {
+  width: 120px; height: 120px; border-radius: 50%;
+  background: linear-gradient(135deg, rgba(123,159,255,0.25), rgba(94,234,212,0.15));
+  border: 2px solid rgba(255,255,255,0.12);
+  box-shadow: 0 0 60px rgba(123,159,255,0.12), inset 0 1px 0 rgba(255,255,255,0.08);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 32px; position: relative;
+  transition: all var(--transition-spring);
+}
+.hero-avatar:hover {
+  transform: scale(1.06);
+  box-shadow: 0 0 80px rgba(123,159,255,0.2), inset 0 1px 0 rgba(255,255,255,0.12);
+}
+.hero-avatar .avatar-inner {
+  font-size: 3rem; font-weight: 300;
+  background: linear-gradient(135deg, #7b9fff, #5eead4);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-name {
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  font-weight: 700; letter-spacing: -0.03em;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #e8e8f0 30%, #b8c8f8 70%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-title {
+  font-size: 1.15rem; color: var(--text-secondary);
+  font-weight: 400; letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+.hero-subtitle {
+  font-size: 0.95rem; color: var(--text-muted);
+  max-width: 500px; line-height: 1.7;
+}
+.hero-cta {
+  margin-top: 36px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+}
+.btn-primary {
+  padding: 12px 28px; border-radius: 100px;
+  background: linear-gradient(135deg, var(--accent), #5b7fe8);
+  color: #fff; font-size: 0.95rem; font-weight: 600;
+  text-decoration: none; border: none; cursor: pointer;
+  box-shadow: 0 4px 20px var(--accent-glow);
+  transition: all var(--transition-smooth);
+  letter-spacing: 0.02em;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(123,159,255,0.45);
+}
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 12px var(--accent-glow);
+  transition: all 0.08s ease;
+}
+.btn-ghost {
+  padding: 12px 28px; border-radius: 100px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: var(--text-primary); font-size: 0.95rem; font-weight: 500;
+  text-decoration: none; cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all var(--transition-smooth);
+}
+.btn-ghost:hover {
+  border-color: rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.04);
+  transform: translateY(-2px);
+}
+.btn-ghost:active {
+  transform: translateY(0);
+  transition: all 0.08s ease;
+}
+
+/* ============================================================
+   FLOATING SCORE TEXT
+   ============================================================ */
+.float-score {
+  position: absolute; pointer-events: none; z-index: 50;
+  font-weight: 700; font-size: 1.1rem; opacity: 0;
+  animation: floatUp 1.2s ease-out forwards;
+  background: linear-gradient(135deg, var(--cyan), var(--accent));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+@keyframes floatUp {
+  0%   { opacity:1; transform:translateY(0) scale(1); }
+  60%  { opacity:1; transform:translateY(-48px) scale(1.15); }
+  100% { opacity:0; transform:translateY(-80px) scale(0.8); }
+}
+
+/* ============================================================
+   SCREEN SHAKE
+   ============================================================ */
+@keyframes shake {
+  0%,100% { transform:translate(0); }
+  15% { transform:translate(-3px, 2px); }
+  30% { transform:translate(3px, -2px); }
+  45% { transform:translate(-2px, -1px); }
+  60% { transform:translate(2px, 1px); }
+  75% { transform:translate(-1px, 1px); }
+  90% { transform:translate(2px, -1px); }
+}
+.shake { animation: shake 0.35s ease-in-out; }
+
+/* ============================================================
+   SECTION STYLES
+   ============================================================ */
+.section {
+  padding: 80px 0;
+}
+.section-label {
+  font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--accent);
+  margin-bottom: 12px;
+}
+.section-title {
+  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+  font-weight: 700; letter-spacing: -0.02em;
+  margin-bottom: 40px;
+}
+
+/* ============================================================
+   ABOUT
+   ============================================================ */
+.about-content {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 28px;
+}
+.about-text {
+  padding: 32px;
+  font-size: 0.95rem; color: var(--text-secondary);
+  line-height: 1.8;
+}
+.about-text strong { color: var(--text-primary); font-weight: 600; }
+.about-highlights {
+  display: flex; flex-direction: column; gap: 14px;
+}
+.highlight-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 22px;
+}
+.highlight-icon {
+  width: 44px; height: 44px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+  background: rgba(123,159,255,0.1);
+  border: 1px solid rgba(123,159,255,0.15);
+  flex-shrink: 0;
+}
+.highlight-info .hl-value {
+  font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em;
+}
+.highlight-info .hl-label {
+  font-size: 0.78rem; color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ============================================================
+   SKILLS
+   ============================================================ */
+.skills-grid {
+  display: flex; flex-wrap: wrap; gap: 10px;
+}
+.skill-badge {
+  padding: 10px 20px; border-radius: 100px;
+  font-size: 0.86rem; font-weight: 500;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  color: var(--text-secondary);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all var(--transition-smooth);
+  cursor: default;
+}
+.skill-badge:hover {
+  background: rgba(123,159,255,0.1);
+  border-color: rgba(123,159,255,0.25);
+  color: var(--text-primary);
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 4px 16px rgba(123,159,255,0.12);
+}
+
+/* ============================================================
+   PROJECTS
+   ============================================================ */
+.projects-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+.project-card {
+  padding: 0; overflow: hidden;
+  cursor: pointer;
+}
+.project-card .card-img {
+  width: 100%; height: 160px;
+  background: linear-gradient(135deg, rgba(123,159,255,0.12), rgba(94,234,212,0.06));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.5rem; position: relative; overflow: hidden;
+}
+.project-card .card-img::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 40%, rgba(123,159,255,0.08), transparent 70%);
+}
+.project-card .card-body {
+  padding: 22px 24px 28px;
+}
+.project-card .card-tags {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;
+}
+.project-card .card-tags span {
+  font-size: 0.7rem; padding: 3px 10px; border-radius: 100px;
+  background: rgba(123,159,255,0.1);
+  color: var(--accent); font-weight: 500;
+}
+.project-card h3 {
+  font-size: 1.1rem; font-weight: 600; margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+.project-card p {
+  font-size: 0.84rem; color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* ============================================================
+   CONTACT
+   ============================================================ */
+.contact-card {
+  padding: 40px; text-align: center;
+}
+.contact-card h2 {
+  font-size: 1.6rem; font-weight: 700; margin-bottom: 12px;
+}
+.contact-card p {
+  color: var(--text-muted); margin-bottom: 28px;
+  font-size: 0.95rem;
+}
+.contact-links {
+  display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+footer {
+  text-align: center; padding: 40px 0 60px;
+  color: var(--text-muted); font-size: 0.78rem;
+}
+footer span {
+  background: linear-gradient(135deg, var(--accent), var(--cyan));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================================
+   SCROLL ANIMATIONS
+   ============================================================ */
+.reveal {
+  opacity: 0; transform: translateY(28px);
+  transition: all 0.7s cubic-bezier(0.4,0,0.2,1);
+}
+.reveal.visible {
+  opacity: 1; transform: translateY(0);
+}
+
+/* ============================================================
+   CURSOR TRAIL PARTICLE
+   ============================================================ */
+.cursor-particle {
+  position: fixed; pointer-events: none; z-index: 999;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+  animation: cursorFade 0.6s ease-out forwards;
+}
+@keyframes cursorFade {
+  0%   { opacity:0.8; transform:scale(1); }
+  100% { opacity:0; transform:scale(0); }
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 768px) {
+  nav { padding: 12px 16px; }
+  nav .nav-links { gap: 16px; }
+  nav .nav-links a { font-size: 0.82rem; }
+  .about-content { grid-template-columns: 1fr; }
+  .projects-grid { grid-template-columns: 1fr; }
+  .section { padding: 50px 0; }
+  .hero { min-height: 90vh; }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  html { scroll-behavior: auto; }
+  #starfield-canvas { display: none; }
+  .dot-grid { display: none; }
+  .reveal { opacity: 1; transform: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- STARFIELD CANVAS -->
+<canvas id="starfield-canvas"></canvas>
+
+<!-- DOT GRID -->
+<div class="dot-grid"></div>
+
+<!-- NAVIGATION -->
+<nav>
+  <div class="logo">Portfolio</div>
+  <div class="nav-links">
+    <a href="#about">关于</a>
+    <a href="#skills">技能</a>
+    <a href="#projects">项目</a>
+    <a href="#contact">联系</a>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main>
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="hero-avatar" id="avatar">
+      <span class="avatar-inner">✨</span>
+    </div>
+    <h1 class="hero-name">你的名字</h1>
+    <p class="hero-title">全栈开发者 · 开源贡献者 · 创意工程师</p>
+    <p class="hero-subtitle">热爱构建优雅的产品体验，专注于前端架构、交互设计 与 AI 应用开发。</p>
+    <div class="hero-cta">
+      <a href="#projects" class="btn-primary">查看作品</a>
+      <a href="#contact" class="btn-ghost">联系我</a>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="section reveal" id="about">
+    <div class="section-label">About</div>
+    <h2 class="section-title">关于我</h2>
+    <div class="about-content">
+      <div class="glass-card about-text">
+        <p>
+          嗨，我是 <strong>你的名字</strong>。一名拥有 <strong>X 年经验</strong>的全栈开发者，
+          目前专注于 <strong>React / TypeScript / Node.js</strong> 技术栈。
+        </p>
+        <p style="margin-top:12px;">
+          我相信<strong>代码即设计</strong>——每一行代码都应该是美的、可维护的、为用户创造价值的。
+          在业余时间，我热衷于开源贡献，探索 AI 与前端的新边界。
+        </p>
+      </div>
+      <div class="about-highlights">
+        <div class="glass-card highlight-item">
+          <div class="highlight-icon">🚀</div>
+          <div class="highlight-info">
+            <div class="hl-value">50+</div>
+            <div class="hl-label">完成项目</div>
+          </div>
+        </div>
+        <div class="glass-card highlight-item">
+          <div class="highlight-icon">⭐</div>
+          <div class="highlight-info">
+            <div class="hl-value">2.5K+</div>
+            <div class="hl-label">GitHub Stars</div>
+          </div>
+        </div>
+        <div class="glass-card highlight-item">
+          <div class="highlight-icon">🌍</div>
+          <div class="highlight-info">
+            <div class="hl-value">X+</div>
+            <div class="hl-label">年经验</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SKILLS -->
+  <section class="section reveal" id="skills">
+    <div class="section-label">Skills</div>
+    <h2 class="section-title">技能栈</h2>
+    <div class="glass-card" style="padding:28px 32px;">
+      <div class="skills-grid">
+        <span class="skill-badge">TypeScript</span>
+        <span class="skill-badge">React</span>
+        <span class="skill-badge">Next.js</span>
+        <span class="skill-badge">Vue.js</span>
+        <span class="skill-badge">Node.js</span>
+        <span class="skill-badge">Python</span>
+        <span class="skill-badge">Tailwind CSS</span>
+        <span class="skill-badge">PostgreSQL</span>
+        <span class="skill-badge">Docker</span>
+        <span class="skill-badge">AWS</span>
+        <span class="skill-badge">GraphQL</span>
+        <span class="skill-badge">Figma</span>
+        <span class="skill-badge">Rust</span>
+        <span class="skill-badge">Three.js</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section class="section reveal" id="projects">
+    <div class="section-label">Projects</div>
+    <h2 class="section-title">精选项目</h2>
+    <div class="projects-grid">
+      <!-- Project 1 -->
+      <div class="glass-card project-card" data-project="1">
+        <div class="card-img">🛠️</div>
+        <div class="card-body">
+          <div class="card-tags"><span>React</span><span>Node.js</span><span>AI</span></div>
+          <h3>AI 代码助手</h3>
+          <p>基于 LLM 的智能编程助手，支持代码补全、重构建议和自动文档生成。</p>
+        </div>
+      </div>
+      <!-- Project 2 -->
+      <div class="glass-card project-card" data-project="2">
+        <div class="card-img">📊</div>
+        <div class="card-body">
+          <div class="card-tags"><span>Vue.js</span><span>D3.js</span></div>
+          <h3>数据可视化平台</h3>
+          <p>实时大数据分析仪表盘，支持拖拽式图表构建，毫秒级渲染。</p>
+        </div>
+      </div>
+      <!-- Project 3 -->
+      <div class="glass-card project-card" data-project="3">
+        <div class="card-img">🎮</div>
+        <div class="card-body">
+          <div class="card-tags"><span>Canvas</span><span>WebGL</span></div>
+          <h3>粒子交互引擎</h3>
+          <p>高性能 Web 粒子系统，10万+ 粒子实时交互，零依赖纯 Canvas 实现。</p>
+        </div>
+      </div>
+      <!-- Project 4 -->
+      <div class="glass-card project-card" data-project="4">
+        <div class="card-img">🔧</div>
+        <div class="card-body">
+          <div class="card-tags"><span>Rust</span><span>WASM</span></div>
+          <h3>开源工具库</h3>
+          <p>Rust + WASM 构建的高性能前端工具集，npm 周下载 10K+。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="section reveal" id="contact">
+    <div class="section-label">Contact</div>
+    <div class="glass-card contact-card">
+      <h2>一起做点什么吧</h2>
+      <p>无论是项目合作、技术交流还是喝杯咖啡 ☕️，随时联系我。</p>
+      <div class="contact-links">
+        <a href="mailto:you@example.com" class="btn-primary">✉️ 发送邮件</a>
+        <a href="https://github.com" target="_blank" rel="noopener" class="btn-ghost">🐙 GitHub</a>
+        <a href="#" class="btn-ghost">💼 LinkedIn</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>© 2026 <span>Your Name</span> · Built with ❤️</p>
+</footer>
+
+<!-- ============================================================
+     SCRIPTS
+     ============================================================ -->
+<script>
+/* ============================================================
+   STARFIELD + PARTICLES (Canvas)
+   ============================================================ */
+(function() {
+  const canvas = document.getElementById('starfield-canvas');
+  const ctx = canvas.getContext('2d');
+  let w, h;
+
+  const stars = [];
+  const STAR_COUNT = 220;
+  const particles = [];
+  const MAX_PARTICLES = 50;
+
+  // Mouse position
+  let mouseX = -1000, mouseY = -1000;
+  let targetMouseX = -1000, targetMouseY = -1000;
+
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Create starfield
+  for (let i = 0; i < STAR_COUNT; i++) {
+    stars.push({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      r: Math.random() * 1.6 + 0.3,
+      speed: Math.random() * 0.25 + 0.05,
+      twinkle: Math.random() * Math.PI * 2,
+      twinkleSpeed: Math.random() * 0.02 + 0.005,
+    });
+  }
+
+  // Track mouse
+  document.addEventListener('mousemove', (e) => {
+    targetMouseX = e.clientX;
+    targetMouseY = e.clientY;
+  });
+  document.addEventListener('mouseleave', () => {
+    targetMouseX = -1000;
+    targetMouseY = -1000;
+  });
+
+  function spawnParticle(x, y) {
+    if (particles.length >= MAX_PARTICLES) particles.shift();
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 1.2,
+      vy: (Math.random() - 0.5) * 1.2 - 1,
+      life: 1,
+      decay: Math.random() * 0.015 + 0.008,
+      r: Math.random() * 2 + 1,
+    });
+  }
+
+  function animate() {
+    // Smooth mouse follow
+    mouseX += (targetMouseX - mouseX) * 0.08;
+    mouseY += (targetMouseY - mouseY) * 0.08;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Draw stars
+    for (const s of stars) {
+      s.twinkle += s.twinkleSpeed;
+      const alpha = 0.4 + Math.sin(s.twinkle) * 0.3 + 0.3;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200,210,255,${alpha})`;
+      ctx.fill();
+
+      // Slow drift
+      s.y -= s.speed;
+      if (s.y < -10) { s.y = h + 10; s.x = Math.random() * w; }
+    }
+
+    // Mouse glow
+    if (mouseX > -500 && mouseY > -500) {
+      const grad = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 200);
+      grad.addColorStop(0, 'rgba(123,159,255,0.06)');
+      grad.addColorStop(0.5, 'rgba(123,159,255,0.02)');
+      grad.addColorStop(1, 'rgba(123,159,255,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(mouseX - 200, mouseY - 200, 400, 400);
+
+      // Spawn occasional cursor particles
+      if (Math.random() < 0.35) spawnParticle(mouseX, mouseY);
+    }
+
+    // Draw & update particles
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= p.decay;
+      if (p.life <= 0) { particles.splice(i, 1); continue; }
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(123,159,255,${p.life * 0.6})`;
+      ctx.fill();
+    }
+
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+
+/* ============================================================
+   SCROLL REVEAL
+   ============================================================ */
+(function() {
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+  reveals.forEach(el => observer.observe(el));
+})();
+
+/* ============================================================
+   SCREEN SHAKE
+   ============================================================ */
+function triggerShake(el) {
+  el.classList.add('shake');
+  el.addEventListener('animationend', () => el.classList.remove('shake'), { once: true });
+}
+
+/* ============================================================
+   FLOATING SCORE TEXT
+   ============================================================ */
+function spawnFloatScore(x, y, text) {
+  const el = document.createElement('div');
+  el.className = 'float-score';
+  el.textContent = text;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  document.body.appendChild(el);
+  el.addEventListener('animationend', () => el.remove());
+}
+
+/* ============================================================
+   INTERACTIONS
+   ============================================================ */
+
+// Project cards: click → shake + float score
+document.querySelectorAll('.project-card').forEach(card => {
+  card.addEventListener('click', function(e) {
+    triggerShake(this);
+    spawnFloatScore(e.clientX, e.clientY, '+1 ⭐');
+  });
+});
+
+// Avatar: click → shake + score
+const avatar = document.getElementById('avatar');
+if (avatar) {
+  avatar.addEventListener('click', function(e) {
+    triggerShake(document.querySelector('.hero'));
+    spawnFloatScore(e.clientX, e.clientY, '👋 Hello!');
+  });
+}
+
+// Skill badges: hover → tiny float
+document.querySelectorAll('.skill-badge').forEach(badge => {
+  badge.addEventListener('mouseenter', function(e) {
+    spawnFloatScore(
+      e.clientX + (Math.random() - 0.5) * 20,
+      e.clientY - 8,
+      '✦'
+    );
+  });
+});
+
+// Global shake on double-click anywhere
+document.addEventListener('dblclick', function(e) {
+  if (e.target.closest('a, button, .project-card')) return;
+  triggerShake(document.body);
+  spawnFloatScore(e.clientX, e.clientY, '💥');
+});
+
+/* ============================================================
+   NAV SCROLL HIGHLIGHT
+   ============================================================ */
+(function() {
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 120) {
+        current = s.getAttribute('id');
+      }
+    });
+    navLinks.forEach(a => {
+      a.style.color = a.getAttribute('href') === '#' + current
+        ? 'var(--text-primary)'
+        : '';
+    });
+  });
+})();
+
+/* ============================================================
+   PARALLAX ON HERO AVATAR
+   ============================================================ */
+(function() {
+  const heroAvatar = document.querySelector('.hero-avatar');
+  if (!heroAvatar) return;
+  document.addEventListener('mousemove', (e) => {
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2;
+    const dx = (e.clientX - cx) / cx;
+    const dy = (e.clientY - cy) / cy;
+    heroAvatar.style.transform = `translate(${dx * 6}px, ${dy * 6}px)`;
+  });
+})();
+
+console.log('%c🚀 Portfolio Ready %c· %cStarfleld + Glassmorphism',
+  'color:#7b9fff;font-size:1.2em;',
+  '',
+  'color:#5eead4;');
+</script>
+</body>
+</html>
